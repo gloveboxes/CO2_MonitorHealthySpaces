@@ -1,0 +1,6 @@
+[submodule "src/AzureSphereDevX"]
+	path = src/AzureSphereDevX
+	url = https://github.com/Azure-Sphere-DevX/AzureSphereDevX.git
+[submodule "src/AzureSphereDrivers"]
+	path = src/AzureSphereDrivers
+	url = https://github.com/Azure-Sphere-DevX/AzureSphereDrivers.git
