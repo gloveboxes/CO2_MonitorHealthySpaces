@@ -1,4 +1,4 @@
-# Improve health, wellbeing, and productivity by tracking CO2 levels
+# Healthy Spaces CO2 Anomaly Detection
 
 Create healthier safer spaces by monitoring CO2, temperature, and humidity levels with [Azure Sphere](https://azure.microsoft.com/en-gb/services/azure-sphere/?WT.mc_id=julyot-co2-dglover) and [Azure IoT Central](https://azure.microsoft.com/en-gb/services/iot-central/?WT.mc_id=julyot-co2-dglover).
 
