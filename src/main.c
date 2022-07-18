@@ -76,38 +76,6 @@ static DX_TIMER_HANDLER(publish_telemetry_handler)
 DX_TIMER_HANDLER_END
 
 /// <summary>
-/// Determine if telemetry value changed. If so, update it's device twin
-/// </summary>
-/// <param name="new_value"></param>
-/// <param name="previous_value"></param>
-/// <param name="device_twin"></param>
-static void device_twin_update(int *latest_value, int *previous_value, DX_DEVICE_TWIN_BINDING *device_twin)
-{
-    if (*latest_value != *previous_value)
-    {
-        *previous_value = *latest_value;
-        dx_deviceTwinReportValue(device_twin, latest_value);
-    }
-}
-
-/// <summary>
-/// Only update device twins if data changed to minimize network and cloud costs
-/// </summary>
-/// <param name="temperature"></param>
-/// <param name="pressure"></param>
-static DX_TIMER_HANDLER(update_device_twins)
-{
-    if (telemetry.valid && azure_connected)
-    {
-        device_twin_update(&telemetry.latest.temperature, &telemetry.previous.temperature, &dt_temperature);
-        device_twin_update(&telemetry.latest.pressure, &telemetry.previous.pressure, &dt_pressure);
-        device_twin_update(&telemetry.latest.humidity, &telemetry.previous.humidity, &dt_humidity);
-        device_twin_update(&telemetry.latest.co2ppm, &telemetry.previous.co2ppm, &dt_carbon_dioxide);
-    }
-}
-DX_TIMER_HANDLER_END
-
-/// <summary>
 /// Handler called every 20 seconds
 /// The CO2 sensor and Avnet Onboard sensors are read
 /// Then reload 20 second oneshot timer

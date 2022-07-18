@@ -42,7 +42,7 @@ static DX_DECLARE_TIMER_HANDLER(publish_telemetry_handler);
 static DX_DECLARE_TIMER_HANDLER(read_buttons_handler);
 static DX_DECLARE_TIMER_HANDLER(read_telemetry_handler);
 static DX_DECLARE_TIMER_HANDLER(status_rgb_off_handler);
-static DX_DECLARE_TIMER_HANDLER(update_device_twins);
+// static DX_DECLARE_TIMER_HANDLER(update_device_twins);
 static DX_DECLARE_TIMER_HANDLER(watchdog_handler);
 static DX_DIRECT_METHOD_RESPONSE_CODE restart_device_handler(JSON_Value *json, DX_DIRECT_METHOD_BINDING *directMethodBinding, char **responseMsg);
 
@@ -87,19 +87,8 @@ static DX_MESSAGE_CONTENT_PROPERTIES contentProperties = {.contentEncoding = "ut
  * declare device twin bindings
  **********************************************************************************************************/
 
-static DX_DEVICE_TWIN_BINDING dt_co2_ppm_alert_level = {.propertyName = "AlertLevel", .twinType = DX_DEVICE_TWIN_INT, .handler = set_co2_alert_level};
 static DX_DEVICE_TWIN_BINDING dt_altitude_in_meters = {.propertyName = "AltitudeInMeters", .twinType = DX_DEVICE_TWIN_INT, .handler = set_device_altitude};
-
-static DX_DEVICE_TWIN_BINDING dt_humidity = {.propertyName = "Humidity", .twinType = DX_DEVICE_TWIN_INT};
-static DX_DEVICE_TWIN_BINDING dt_pressure = {.propertyName = "Pressure", .twinType = DX_DEVICE_TWIN_INT};
-static DX_DEVICE_TWIN_BINDING dt_temperature = {.propertyName = "Temperature", .twinType = DX_DEVICE_TWIN_INT};
-static DX_DEVICE_TWIN_BINDING dt_carbon_dioxide = {.propertyName = "CarbonDioxide", .twinType = DX_DEVICE_TWIN_INT};
-
-static DX_DEVICE_TWIN_BINDING dt_max_humidity = {.propertyName = "MaxHumidity", .twinType = DX_DEVICE_TWIN_INT};
-static DX_DEVICE_TWIN_BINDING dt_max_pressure = {.propertyName = "MaxPressure", .twinType = DX_DEVICE_TWIN_INT};
-static DX_DEVICE_TWIN_BINDING dt_max_temperature = {.propertyName = "MaxTemperature", .twinType = DX_DEVICE_TWIN_INT};
-static DX_DEVICE_TWIN_BINDING dt_max_carbon_dioxide = {.propertyName = "MaxCarbonDioxide", .twinType = DX_DEVICE_TWIN_INT};
-
+static DX_DEVICE_TWIN_BINDING dt_co2_ppm_alert_level = {.propertyName = "AlertLevel", .twinType = DX_DEVICE_TWIN_INT, .handler = set_co2_alert_level};
 static DX_DEVICE_TWIN_BINDING dt_startup_utc = {.propertyName = "StartupUtc", .twinType = DX_DEVICE_TWIN_STRING};
 static DX_DEVICE_TWIN_BINDING dt_sw_version = {.propertyName = "SoftwareVersion", .twinType = DX_DEVICE_TWIN_STRING};
 
@@ -129,11 +118,11 @@ DX_TIMER_BINDING tmr_azure_status_led_on = {
 static DX_TIMER_BINDING tmr_co2_alert_buzzer_off_oneshot = {.name = "tmr_co2_alert_buzzer_off_oneshot", .handler = co2_alert_buzzer_off_handler};
 static DX_TIMER_BINDING tmr_co2_alert_timer = {.repeat = &(struct timespec){8, 0}, .name = "tmr_co2_alert_timer", .handler = co2_alert_handler};
 static DX_TIMER_BINDING tmr_delayed_restart_device = {.name = "tmr_delayed_restart_device", .handler = delayed_restart_device_handler};
-static DX_TIMER_BINDING tmr_publish_telemetry = {.delay = &(struct timespec){60, 0}, .name = "tmr_publish_telemetry", .handler = publish_telemetry_handler};
+static DX_TIMER_BINDING tmr_publish_telemetry = {.repeat = &(struct timespec){60, 0}, .name = "tmr_publish_telemetry", .handler = publish_telemetry_handler};
 static DX_TIMER_BINDING tmr_read_buttons = {.repeat = &(struct timespec){0, 100 * ONE_MS}, .name = "tmr_read_buttons", .handler = read_buttons_handler};
 static DX_TIMER_BINDING tmr_read_telemetry = {.delay = &(struct timespec){0, 500 * ONE_MS}, .name = "tmr_read_telemetry", .handler = read_telemetry_handler};
 static DX_TIMER_BINDING tmr_status_rgb_off = {.name = "tmr_status_rgb_off", .handler = status_rgb_off_handler};
-static DX_TIMER_BINDING tmr_update_device_twins = {.repeat = &(struct timespec){30, 0}, .name = "tmr_update_device_twins", .handler = update_device_twins};
+// static DX_TIMER_BINDING tmr_update_device_twins = {.repeat = &(struct timespec){30, 0}, .name = "tmr_update_device_twins", .handler = update_device_twins};
 static DX_TIMER_BINDING tmr_watchdog = {.repeat = &(struct timespec){30, 0}, .name = "tmr_publish_telemetry", .handler = watchdog_handler};
 
 /***********************************************************************************************************
@@ -161,8 +150,7 @@ DX_I2C_BINDING i2c_onboard_sensors = {.interfaceId = I2C_ISU2, .speedInHz = I2C_
 
 // All bindings referenced in the following binding sets are initialised in the InitPeripheralsAndHandlers function
 static DX_DEVICE_TWIN_BINDING *device_twin_bindings[] = {
-    &dt_co2_ppm_alert_level, &dt_startup_utc,        &dt_sw_version,   &dt_temperature,  &dt_pressure,        &dt_humidity,           &dt_carbon_dioxide,
-    &dt_defer_requested,     &dt_altitude_in_meters, &dt_max_humidity, &dt_max_pressure, &dt_max_temperature, &dt_max_carbon_dioxide,
+    &dt_co2_ppm_alert_level, &dt_startup_utc, &dt_sw_version, &dt_defer_requested, &dt_altitude_in_meters,
 
 };
 
@@ -174,16 +162,10 @@ static DX_GPIO_BINDING *gpio_bindings[] = {&gpio_network_led, &gpio_button_b};
 static DX_DIRECT_METHOD_BINDING *direct_method_bindings[] = {&dm_restart_device};
 
 static DX_TIMER_BINDING *timer_bindings[] = {
-    &tmr_read_telemetry,
-    &tmr_azure_status_led_off,
-    &tmr_azure_status_led_on,
-    &tmr_co2_alert_buzzer_off_oneshot,
-    &tmr_co2_alert_timer,
-    &tmr_delayed_restart_device,
-    &tmr_publish_telemetry,
-    &tmr_read_buttons,
-    &tmr_status_rgb_off,
-    &tmr_update_device_twins,
-    &tmr_watchdog,
+    &tmr_read_telemetry,      &tmr_azure_status_led_off,
+    &tmr_azure_status_led_on, &tmr_co2_alert_buzzer_off_oneshot,
+    &tmr_co2_alert_timer,     &tmr_delayed_restart_device,
+    &tmr_publish_telemetry,   &tmr_read_buttons,
+    &tmr_status_rgb_off,      &tmr_watchdog,
 
 };
