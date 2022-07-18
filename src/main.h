@@ -42,7 +42,6 @@ static DX_DECLARE_TIMER_HANDLER(publish_telemetry_handler);
 static DX_DECLARE_TIMER_HANDLER(read_buttons_handler);
 static DX_DECLARE_TIMER_HANDLER(read_telemetry_handler);
 static DX_DECLARE_TIMER_HANDLER(status_rgb_off_handler);
-// static DX_DECLARE_TIMER_HANDLER(update_device_twins);
 static DX_DECLARE_TIMER_HANDLER(watchdog_handler);
 static DX_DIRECT_METHOD_RESPONSE_CODE restart_device_handler(JSON_Value *json, DX_DIRECT_METHOD_BINDING *directMethodBinding, char **responseMsg);
 
