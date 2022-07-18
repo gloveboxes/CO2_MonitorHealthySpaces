@@ -15,7 +15,6 @@
 
 #include "hw/co2_monitor.h" // Hardware definition
 #include "app_exit_codes.h" // application specific exit codes
-#include "Onboard/onboard_sensors.h"
 #include "Onboard/azure_status.h"
 #include "co2_sensor.h"
 
@@ -96,6 +95,11 @@ static DX_DEVICE_TWIN_BINDING dt_pressure = {.propertyName = "Pressure", .twinTy
 static DX_DEVICE_TWIN_BINDING dt_temperature = {.propertyName = "Temperature", .twinType = DX_DEVICE_TWIN_INT};
 static DX_DEVICE_TWIN_BINDING dt_carbon_dioxide = {.propertyName = "CarbonDioxide", .twinType = DX_DEVICE_TWIN_INT};
 
+static DX_DEVICE_TWIN_BINDING dt_max_humidity = {.propertyName = "MaxHumidity", .twinType = DX_DEVICE_TWIN_INT};
+static DX_DEVICE_TWIN_BINDING dt_max_pressure = {.propertyName = "MaxPressure", .twinType = DX_DEVICE_TWIN_INT};
+static DX_DEVICE_TWIN_BINDING dt_max_temperature = {.propertyName = "MaxTemperature", .twinType = DX_DEVICE_TWIN_INT};
+static DX_DEVICE_TWIN_BINDING dt_max_carbon_dioxide = {.propertyName = "MaxCarbonDioxide", .twinType = DX_DEVICE_TWIN_INT};
+
 static DX_DEVICE_TWIN_BINDING dt_startup_utc = {.propertyName = "StartupUtc", .twinType = DX_DEVICE_TWIN_STRING};
 static DX_DEVICE_TWIN_BINDING dt_sw_version = {.propertyName = "SoftwareVersion", .twinType = DX_DEVICE_TWIN_STRING};
 
@@ -120,15 +124,16 @@ static DX_GPIO_BINDING gpio_button_b = {.pin = BUTTON_B, .name = "button_b", .di
  **********************************************************************************************************/
 
 DX_TIMER_BINDING tmr_azure_status_led_off = {.name = "tmr_azure_status_led_off", .handler = azure_status_led_off_handler};
-DX_TIMER_BINDING tmr_azure_status_led_on = {.repeat = &(struct timespec){0, 500 * ONE_MS}, .name = "tmr_azure_status_led_on", .handler = azure_status_led_on_handler};
+DX_TIMER_BINDING tmr_azure_status_led_on = {
+    .repeat = &(struct timespec){0, 500 * ONE_MS}, .name = "tmr_azure_status_led_on", .handler = azure_status_led_on_handler};
 static DX_TIMER_BINDING tmr_co2_alert_buzzer_off_oneshot = {.name = "tmr_co2_alert_buzzer_off_oneshot", .handler = co2_alert_buzzer_off_handler};
 static DX_TIMER_BINDING tmr_co2_alert_timer = {.repeat = &(struct timespec){8, 0}, .name = "tmr_co2_alert_timer", .handler = co2_alert_handler};
 static DX_TIMER_BINDING tmr_delayed_restart_device = {.name = "tmr_delayed_restart_device", .handler = delayed_restart_device_handler};
-static DX_TIMER_BINDING tmr_publish_telemetry = {.repeat = &(struct timespec){20, 0}, .name = "tmr_publish_telemetry", .handler = publish_telemetry_handler};
+static DX_TIMER_BINDING tmr_publish_telemetry = {.delay = &(struct timespec){60, 0}, .name = "tmr_publish_telemetry", .handler = publish_telemetry_handler};
 static DX_TIMER_BINDING tmr_read_buttons = {.repeat = &(struct timespec){0, 100 * ONE_MS}, .name = "tmr_read_buttons", .handler = read_buttons_handler};
 static DX_TIMER_BINDING tmr_read_telemetry = {.delay = &(struct timespec){0, 500 * ONE_MS}, .name = "tmr_read_telemetry", .handler = read_telemetry_handler};
 static DX_TIMER_BINDING tmr_status_rgb_off = {.name = "tmr_status_rgb_off", .handler = status_rgb_off_handler};
-static DX_TIMER_BINDING tmr_update_device_twins = {.repeat = &(struct timespec){15, 0}, .name = "tmr_update_device_twins", .handler = update_device_twins};
+static DX_TIMER_BINDING tmr_update_device_twins = {.repeat = &(struct timespec){30, 0}, .name = "tmr_update_device_twins", .handler = update_device_twins};
 static DX_TIMER_BINDING tmr_watchdog = {.repeat = &(struct timespec){30, 0}, .name = "tmr_publish_telemetry", .handler = watchdog_handler};
 
 /***********************************************************************************************************
@@ -155,9 +160,11 @@ DX_I2C_BINDING i2c_onboard_sensors = {.interfaceId = I2C_ISU2, .speedInHz = I2C_
  **********************************************************************************************************/
 
 // All bindings referenced in the following binding sets are initialised in the InitPeripheralsAndHandlers function
-static DX_DEVICE_TWIN_BINDING *device_twin_bindings[] = {&dt_co2_ppm_alert_level, &dt_startup_utc,     &dt_sw_version,
-                                                         &dt_temperature,         &dt_pressure,        &dt_humidity,
-                                                         &dt_carbon_dioxide,      &dt_defer_requested, &dt_altitude_in_meters};
+static DX_DEVICE_TWIN_BINDING *device_twin_bindings[] = {
+    &dt_co2_ppm_alert_level, &dt_startup_utc,        &dt_sw_version,   &dt_temperature,  &dt_pressure,        &dt_humidity,           &dt_carbon_dioxide,
+    &dt_defer_requested,     &dt_altitude_in_meters, &dt_max_humidity, &dt_max_pressure, &dt_max_temperature, &dt_max_carbon_dioxide,
+
+};
 
 static DX_PWM_BINDING *pwm_bindings[] = {&pwm_buzz_click, &pwm_led_green, &pwm_led_red, &pwm_led_blue};
 

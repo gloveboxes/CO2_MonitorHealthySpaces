@@ -69,6 +69,8 @@ static DX_TIMER_HANDLER(publish_telemetry_handler)
             dx_Log_Debug("JSON Serialization failed: Buffer too small\n");
             dx_terminate(APP_ExitCode_Telemetry_Buffer_Too_Small);
         }
+        // reset latest sensor telemetry
+        memset(&telemetry.latest, 0x00, sizeof(SENSOR));
     }
 }
 DX_TIMER_HANDLER_END
@@ -113,21 +115,37 @@ DX_TIMER_HANDLER_END
 /// <param name="eventLoopTimer"></param>
 static DX_TIMER_HANDLER(read_telemetry_handler)
 {
-    onboard_sensors_read(&telemetry.latest);
+
+#define UPDATE_LATEST(name) telemetry.latest.name = current.name > telemetry.latest.name ? current.name : telemetry.latest.name;
+
+    SENSOR current;
+    memset(&current, 0x00, sizeof(SENSOR));
+
+    // Read pressure from Avnet onboard sensor
+    current.pressure = (int)avnet_get_pressure();
 
     if (co2_read(&telemetry))
     {
         // clang-format off
         telemetry.valid =
-            IN_RANGE(telemetry.latest.temperature, -20, 50) &&
-            IN_RANGE(telemetry.latest.pressure, 800, 1200) &&
-            IN_RANGE(telemetry.latest.humidity, 0, 100) &&
-            IN_RANGE(telemetry.latest.co2ppm, 0, 20000);
+            IN_RANGE(current.temperature, -20, 60) &&
+            IN_RANGE(current.pressure, 800, 1200) &&
+            IN_RANGE(current.humidity, 0, 100) &&
+            IN_RANGE(current.co2ppm, 0, 20000);
         // clang-format on
     }
     else
     {
         telemetry.valid = false;
+    }
+
+    if (telemetry.valid)
+    {
+        UPDATE_LATEST(pressure);
+        UPDATE_LATEST(temperature);
+        UPDATE_LATEST(pressure);
+        UPDATE_LATEST(humidity);
+        UPDATE_LATEST(co2ppm);
     }
 
     dx_timerOneShotSet(&tmr_read_telemetry, &(struct timespec){20, 0});
@@ -167,43 +185,44 @@ DX_TIMER_HANDLER_END
 
 DX_TIMER_HANDLER(status_rgb_off_handler)
 {
-    dx_pwmStop(&pwm_led_blue);
-    dx_pwmStop(&pwm_led_red);
+    dx_pwmSetDutyCycle(&pwm_led_red, 1000, 100);
+    dx_pwmSetDutyCycle(&pwm_led_blue, 1000, 100);
 }
 DX_TIMER_HANDLER_END
 
 static void update_co2_alert_status(void)
 {
+    dx_pwmSetDutyCycle(&pwm_led_red, 1000, 100);
+    dx_pwmSetDutyCycle(&pwm_led_blue, 1000, 100);
+
     if (!telemetry.valid)
     {
+        Log_Debug("Invalid telemetry\n");
         return;
     }
 
     // Light level is a percentage. 0% is dark, 100% very bright
     // Calculate brightness. LED brightness is inverted, 100% duty cycle is off, 0% duty cycle is full on
-    uint32_t brightness = 100 - (uint32_t)telemetry.latest.light;
+    int light_level = avnet_get_light_level();
+    uint32_t brightness = 100 - (uint32_t)(light_level > 100 ? 100 : light_level);
     brightness = brightness == 100 ? 99 : brightness;
+
+    Log_Debug("Brightness: %d\n", brightness);
 
     if (telemetry.latest.co2ppm > co2_alert_level)
     {
         if (!be_quiet)
         {
             dx_pwmSetDutyCycle(&pwm_buzz_click, 5000, 1);
-            dx_timerOneShotSet(&tmr_co2_alert_buzzer_off_oneshot, &(struct timespec){0, 10 * ONE_MS});
+            dx_timerOneShotSet(&tmr_co2_alert_buzzer_off_oneshot, &(struct timespec){0, 4 * ONE_MS});
         }
-
-        // dx_pwmSetDutyCycle(&pwm_led_blue, 1000, 100);
-        dx_pwmStop(&pwm_led_blue);
         dx_pwmSetDutyCycle(&pwm_led_red, 1000, brightness);
-        dx_timerOneShotSet(&tmr_status_rgb_off, &(struct timespec){0, 100 * ONE_MS});
     }
     else
     {
         dx_pwmSetDutyCycle(&pwm_led_blue, 1000, brightness);
-        dx_pwmStop(&pwm_led_red);
-        // dx_pwmSetDutyCycle(&pwm_led_red, 1000, 100);
-        dx_timerOneShotSet(&tmr_status_rgb_off, &(struct timespec){0, 100 * ONE_MS});
     }
+    dx_timerOneShotSet(&tmr_status_rgb_off, &(struct timespec){0, 100 * ONE_MS});
 }
 
 /// <summary>
@@ -409,7 +428,7 @@ static void InitPeripheralsAndHandlers(void)
     dx_i2cSetOpen(i2c_bindings, NELEMS(i2c_bindings));
 
     // Onboard LEDs are wired such that high voltage is off, low is on
-    // Slightly unintuitive, but a 100% duration cycle turns the LED off    
+    // Slightly unintuitive, but a 100% duration cycle turns the LED off
     dx_pwmSetDutyCycle(&pwm_led_red, 1000, 100);
     dx_pwmSetDutyCycle(&pwm_led_green, 1000, 100);
     dx_pwmSetDutyCycle(&pwm_led_blue, 1000, 100);

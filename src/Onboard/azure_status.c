@@ -29,10 +29,11 @@ DX_TIMER_HANDLER(azure_status_led_on_handler)
     }
     else if (azure_connected)
     {
-        dx_gpioOn(&gpio_network_led);
-        // off for 19990ms, on for 100ms = 4000ms in total
-        dx_timerOneShotSet(&tmr_azure_status_led_on, &(struct timespec){20, 0});
-        dx_timerOneShotSet(&tmr_azure_status_led_off, &(struct timespec){0, 10 * ONE_MS});
+        dx_gpioOff(&gpio_network_led);
+        // dx_gpioOn(&gpio_network_led);
+        // // off for 19990ms, on for 100ms = 4000ms in total
+        // dx_timerOneShotSet(&tmr_azure_status_led_on, &(struct timespec){20, 0});
+        // dx_timerOneShotSet(&tmr_azure_status_led_off, &(struct timespec){0, 10 * ONE_MS});
     }
     else
     {
