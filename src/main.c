@@ -96,10 +96,10 @@ static DX_TIMER_HANDLER(read_telemetry_handler)
     {
         // clang-format off
         telemetry.valid =
-            IN_RANGE(current.temperature, -20, 60) &&
-            IN_RANGE(current.pressure, 800, 1200) &&
-            IN_RANGE(current.humidity, 0, 100) &&
-            IN_RANGE(current.co2ppm, 0, 20000);
+            IN_RANGE(telemetry.latest.temperature, -20, 60) &&
+            IN_RANGE(telemetry.latest.pressure, 800, 1200) &&
+            IN_RANGE(telemetry.latest.humidity, 0, 100) &&
+            IN_RANGE(telemetry.latest.co2ppm, 0, 20000);
         // clang-format on
     }
     else
@@ -109,7 +109,6 @@ static DX_TIMER_HANDLER(read_telemetry_handler)
 
     if (telemetry.valid)
     {
-        UPDATE_LATEST(pressure);
         UPDATE_LATEST(temperature);
         UPDATE_LATEST(pressure);
         UPDATE_LATEST(humidity);

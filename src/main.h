@@ -112,8 +112,7 @@ static DX_GPIO_BINDING gpio_button_b = {.pin = BUTTON_B, .name = "button_b", .di
  **********************************************************************************************************/
 
 DX_TIMER_BINDING tmr_azure_status_led_off = {.name = "tmr_azure_status_led_off", .handler = azure_status_led_off_handler};
-DX_TIMER_BINDING tmr_azure_status_led_on = {
-    .repeat = &(struct timespec){0, 500 * ONE_MS}, .name = "tmr_azure_status_led_on", .handler = azure_status_led_on_handler};
+DX_TIMER_BINDING tmr_azure_status_led_on = {.repeat = &(struct timespec){0, 500 * ONE_MS}, .name = "tmr_azure_status_led_on", .handler = azure_status_led_on_handler};
 static DX_TIMER_BINDING tmr_co2_alert_buzzer_off_oneshot = {.name = "tmr_co2_alert_buzzer_off_oneshot", .handler = co2_alert_buzzer_off_handler};
 static DX_TIMER_BINDING tmr_co2_alert_timer = {.repeat = &(struct timespec){8, 0}, .name = "tmr_co2_alert_timer", .handler = co2_alert_handler};
 static DX_TIMER_BINDING tmr_delayed_restart_device = {.name = "tmr_delayed_restart_device", .handler = delayed_restart_device_handler};
